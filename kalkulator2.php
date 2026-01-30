@@ -1,230 +1,118 @@
+<?php
+session_start();
 
- <?php
-    if (isset($_POST['hitung'])) {
-        $angka1 = $_POST['angka1'];
-        $angka2 = $_POST['angka2'];
-        $operator = $_POST['operator'];
-        $hasil = "";
+if (!isset($_SESSION['riwayat'])) {
+    $_SESSION['riwayat'] = [];
+}
 
-        switch ($operator) {
-            case 'tambah':
-                $hasil = $angka1 + $angka2;
-                break;
-            case 'kurang':
-                $hasil = $angka1 - $angka2;
-                break;
-            case 'kali':
-                $hasil = $angka1 * $angka2;
-                break;
-            case 'bagi':
-                if ($angka2 != 0) {
-                    $hasil = $angka1 / $angka2;
-                } else {
-                    $hasil = "Kesalahan: Pembagi nol!";
-                }
-                break;
-        }
-        echo "<h3>Hasil perhitungan: $hasil</h3>";
+// Logika Hapus Riwayat
+if (isset($_GET['action']) && $_GET['action'] == 'hapus') {
+    $_SESSION['riwayat'] = [];
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+$hasil = "";
+if (isset($_POST['hitung'])) {
+    $angka1 = $_POST['angka1'];
+    $angka2 = $_POST['angka2'];
+    $operator = $_POST['operator'];
+    $simbol = "";
+
+    switch ($operator) {
+        case 'tambah': $hasil = $angka1 + $angka2; $simbol = "+"; break;
+        case 'kurang': $hasil = $angka1 - $angka2; $simbol = "-"; break;
+        case 'kali':   $hasil = $angka1 * $angka2; $simbol = "x"; break;
+        case 'bagi':
+            $simbol = "/";
+            $hasil = ($angka2 != 0) ? ($angka1 / $angka2) : "Error (Bagi 0)";
+            break;
     }
-    ?>
+
+    $log = "$angka1 $simbol $angka2 = $hasil";
+    array_unshift($_SESSION['riwayat'], $log);
+}
+
+// Skenario: Tampilkan riwayat jika parameter 'view' ada di URL
+$show_history = isset($_GET['view']) && $_GET['view'] == 'history';
+?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Calculator 2026</title>
-    <link href="fonts.googleapis.com" rel="stylesheet">
+    <title>Kalkulator Terpadu 2026</title>
     <style>
-        :root {
-            --primary-neon: #00f2ff;
-            --accent-purple: #7000ff;
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', sans-serif;
-            background: radial-gradient(circle at top left, #1a1a2e, #16213e, #0f3460);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        /* Dekorasi Background Latar Belakang */
-        .circle {
-            position: absolute;
-            border-radius: 50%;
-            background: linear-gradient(45deg, var(--primary-neon), var(--accent-purple));
-            filter: blur(80px);
-            z-index: -1;
-            animation: move 10s infinite alternate;
-        }
-        .c1 { width: 300px; height: 300px; top: -10%; left: -10%; }
-        .c2 { width: 400px; height: 400px; bottom: -15%; right: -5%; opacity: 0.6; }
-
-        @keyframes move { from { transform: translate(0,0); } to { transform: translate(50px, 50px); } }
-
-        /* Container Utama */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 30px;
-            padding: 40px;
-            width: 380px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            text-align: center;
-            color: white;
-            position: relative;
-        }
-
-        h2 {
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-            font-size: 1.5rem;
-            background: linear-gradient(to right, #fff, var(--primary-neon));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .input-group { position: relative; margin-bottom: 20px; }
-
-        input, select {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 15px;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--primary-neon);
-            background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
-        }
-
-        /* Desain Select yang unik */
-        select option { background: #16213e; color: white; }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            margin-top: 10px;
-            background: linear-gradient(45deg, var(--accent-purple), var(--primary-neon));
-            border: none;
-            border-radius: 15px;
-            color: white;
-            font-weight: 700;
-            font-family: 'Orbitron', sans-serif;
-            cursor: pointer;
-            transition: 0.4s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 5px 15px rgba(112, 0, 255, 0.4);
-        }
-
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0, 242, 255, 0.6);
-            letter-spacing: 3px;
-        }
-
-        /* Panel Hasil */
-        .display-result {
-            margin-top: 30px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
-            border-bottom: 2px solid var(--primary-neon);
-        }
-
-        .display-result label {
-            font-size: 0.8rem;
-            color: var(--primary-neon);
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        #hasil {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            text-shadow: 0 0 10px var(--primary-neon);
-        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #e9ecef; display: flex; justify-content: center; padding-top: 50px; }
+        .main-table { background: white; border-collapse: collapse; width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border-radius: 12px; overflow: hidden; }
+        .header { background: #2c3e50; color: white; text-align: center; padding: 15px; position: relative; }
+        .icon-jam { position: absolute; right: 15px; top: 15px; text-decoration: none; color: #bdc3c7; font-size: 1.2rem; }
+        .icon-jam:hover { color: white; }
+        
+        td { padding: 12px 20px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-hitung { background: #27ae60; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-hitung:hover { background: #219150; }
+        
+        .riwayat-section { background: #f8f9fa; border-top: 2px solid #eee; font-size: 0.9rem; }
+        .riwayat-item { padding: 8px 20px; border-bottom: 1px solid #eee; color: #555; }
+        .btn-back { display: block; text-align: center; padding: 10px; background: #34495e; color: white; text-decoration: none; font-size: 0.8rem; }
+        .btn-hapus { color: #e74c3c; text-decoration: none; font-size: 0.7rem; float: right; }
     </style>
 </head>
 <body>
 
-<div class="circle c1"></div>
-<div class="circle c2"></div>
-
-<div class="glass-card">
-    <h2>QUANTUM CALC</h2>
-    
-    <div class="input-group">
-        <input type="number" id="num1" placeholder="ANGKA PERTAMA" autocomplete="off">
-    </div>
-
-    <div class="input-group">
-        <select id="operator">
-            <option value="" disabled selected>Pilih Perhitungan</option>
-            <option value="tambah">PENJUMLAHAN (+)</option>
-            <option value="kurang">PENGURANGAN (-)</option>
-            <option value="kali">PERKALIAN (×)</option>
-            <option value="bagi">PEMBAGIAN (÷)</option>
-        </select>
-    </div>
-
-    <div class="input-group">
-        <input type="number" id="num2" placeholder="ANGKA KEDUA" autocomplete="off">
-    </div>
-    
-    <button onclick="hitung()">Execute Process</button>
-
-    <div class="display-result">
-        <label>System Output</label>
-        <span id="hasil">0.00</span>
-    </div>
-</div>
-
-<script>
-function hitung() {
-    const n1 = parseFloat(document.getElementById('num1').value);
-    const n2 = parseFloat(document.getElementById('num2').value);
-    const op = document.getElementById('operator').value;
-    const resElem = document.getElementById('hasil');
-
-    if (isNaN(n1) || isNaN(n2) || op === "") {
-        resElem.style.color = "#ff4d4d";
-        resElem.innerText = "ERROR";
-        return;
-    }
-
-    resElem.style.color = "white";
-    let hasil = 0;
-    
-    switch(op) {
-        case "tambah": hasil = n1 + n2; break;
-        case "kurang": hasil = n1 - n2; break;
-        case "kali": hasil = n1 * n2; break;
-        case "bagi": hasil = n2 !== 0 ? (n1 / n2).toFixed(2) : "NAN"; break;
-    }
-
-    // Efek angka berjalan sederhana
-    resElem.innerText = hasil;
-}
-</script>
+<table class="main-table">
+    <thead>
+        <tr>
+            <th class="header">
+                <?php echo $show_history ? "Riwayat Perhitungan" : "Kalkulator 2026"; ?>
+                <a href="?view=history" class="icon-jam" title="Lihat Riwayat">🕒</a>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php if (!$show_history): ?>
+            <!-- Tampilan Kalkulator -->
+            <form method="post" action="?action=hitung">
+                <tr><td><input type="number" name="angka1" step="any" placeholder="Masukkan angka 1" required></td></tr>
+                <tr><td><input type="number" name="angka2" step="any" placeholder="Masukkan angka 2" required></td></tr>
+                <tr>
+                    <td>
+                        <select name="operator">
+                            <option value="tambah">Tambah (+)</option>
+                            <option value="kurang">Kurang (-)</option>
+                            <option value="kali">Kali (x)</option>
+                            <option value="bagi">Bagi (/)</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr><td><button type="submit" name="hitung" class="btn-hitung">HITUNG</button></td></tr>
+                <?php if ($hasil !== ""): ?>
+                    <tr><td style="text-align: center; background: #d4edda; color: #155724;"><strong>Hasil: <?php echo $hasil; ?></strong></td></tr>
+                <?php endif; ?>
+            </form>
+        <?php else: ?>
+            <!-- Tampilan Riwayat (Dalam Tabel yang Sama) -->
+            <tr>
+                <td class="riwayat-section">
+                    <a href="?action=hapus" class="btn-hapus" onclick="return confirm('Hapus semua riwayat?')">Hapus Semua</a>
+                    <div style="margin-bottom: 10px; font-weight: bold; color: #333;">Daftar Terakhir:</div>
+                    <?php if (!empty($_SESSION['riwayat'])): ?>
+                        <?php foreach (array_slice($_SESSION['riwayat'], 0, 10) as $item): ?>
+                            <div class="riwayat-item"><?php echo $item; ?></div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="riwayat-item">Tidak ada riwayat.</div>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 0;"><a href="?" class="btn-back"> Kembali ke Kalkulator</a></td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
 
 </body>
 </html>
